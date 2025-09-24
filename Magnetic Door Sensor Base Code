@@ -1,0 +1,37 @@
+#define DOOR_SENSOR_PIN 14 // ESP32 pin GPIO14 connected to the door sensor's pin
+#define DEBOUNCE_DELAY 50  // 50ms debounce delay
+
+int currentDoorState; // current state of door sensor
+int lastDoorState;    // previous state of door sensor
+unsigned long lastDebounceTime = 0;
+
+void setup() {
+  Serial.begin(9600);                     // initialize serial
+  pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP); // set ESP32 pin to input pull-up mode
+  currentDoorState = digitalRead(DOOR_SENSOR_PIN); // read initial state
+}
+
+void loop() {
+  int newReading = digitalRead(DOOR_SENSOR_PIN); // read new state
+
+  // Check if the state has changed
+  if (newReading != lastDoorState) {
+    lastDebounceTime = millis(); // Reset debounce timer
+  }
+
+  // Only consider the change if it has been stable for DEBOUNCE_DELAY ms
+  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
+    if (newReading != currentDoorState) { // State change confirmed
+      currentDoorState = newReading;
+
+      if (currentDoorState == HIGH) { // LOW -> HIGH
+        Serial.println("The door-opening event is detected");
+      } 
+      else if (currentDoorState == LOW) { // HIGH -> LOW
+        Serial.println("The door-closing event is detected");
+      }
+    }
+  }
+
+  lastDoorState = newReading; // Save last reading for next iteration
+}
