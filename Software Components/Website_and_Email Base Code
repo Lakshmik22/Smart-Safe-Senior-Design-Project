@@ -1,1 +1,179 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <NetworkClient.h>
+#include <ESP_Mail_Client.h>
+ 
+const char* ssid = "everglades_Guest"; // Change as needed
+const char* password = " "; // Change as needed
 
+/** The smtp host name e.g. smtp.gmail.com for GMail or smtp.office365.com for Outlook or smtp.mail.yahoo.com */
+#define SMTP_server "smtp.gmail.com"
+#define SMTP_Port 465
+
+#define sender_email "smartsafesd1@gmail.com"
+#define sender_password " "
+
+#define Recipient_email "sripriyapalli@gmail.com"
+#define Recipient_name ""
+
+/* Declare the global used SMTPSession object for SMTP transport */
+SMTPSession smtp;
+
+
+
+WebServer server(80);
+Session_Config config;
+
+void setup() {
+  Serial.begin(115200);
+
+  //Setup Email client
+    /*  Set the network reconnection option */
+  MailClient.networkReconnect(true);
+
+  smtp.debug(1);
+
+
+  /* Declare the Session_Config for user defined session credentials */
+  
+
+ 
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Print the ESP32's IP address
+  Serial.print("ESP32 Web Server's IP address: ");
+  Serial.println(WiFi.localIP());
+
+  // Define a route to serve the HTML page
+  server.on("/", HTTP_GET, []() {
+    String response = "<!DOCTYPE html>"
+      "<html>"
+      "<head>"
+      "<title>Smart Safe</title>"
+      "<style>"
+      "h1 {text-align: center; margin-top: 30px;}"  
+      "h2 {position: absolute; top: 110px; right: 110px; font-size: 20px;}"
+
+      //Paragraphs
+      "p  {position: relative; left: 40px; top: 40px; font-size: 18px; color: #333;}"
+      "p1 {text-align: center; position: absolute; top: 160px; right: 60px; font-size: 18px; color: #333;}"
+      "p2 {text-align: center; position: absolute; top: 190px; right: 60px; font-size: 18px; color: #333;}"
+      "p3 {text-align: center; position: absolute; top: 230px; right: 60px; font-size: 18px; color: #333;}"
+
+      "body {"
+            "background-color: lightblue;"
+        "}"
+
+      "input[type=email] {position: relative; left: 40px; top: 45px; padding: 10px; font-size: 16px; width: 250px;}"
+      "button {"
+      "position: relative; left: 50px; top: 45px; padding: 10px 20px;"
+      "font-size: 16px; border-radius: 5px; background-color: #007BFF; color: white;"
+      "border: none; cursor: pointer;"
+      "}"
+      "button:hover {background-color: #0056b3;}"
+      "</style>"
+      "</head>"
+      "<body>"
+      "<h1>Welcome to Smart Safe</h1>"
+      "<p>Please Enter Your Email Address:</p>"
+      "<input type='email' id='email' name='user_email' placeholder='Enter your email here'>"
+      "<button onclick='displayMessage()'>Submit</button>"
+      "<p id='SubmitMessage'></p>"
+      "<script>"
+      "function displayMessage() {"
+      "  document.getElementById('SubmitMessage').innerHTML = 'Thank you, please keep an eye on emails from our safe!';"
+      "   fetch(`/sendemail?email=${document.getElementById('email').value}`, {method: 'GET'} )"
+      "   .then(res => console.log(res))"
+      "}"
+      "</script>"
+
+      "<h2>Contact Us:</h2>"
+      "<p1>Email: SmartSafeSD1@gmail.com</p1>"
+      "<p2>Phone Number: 345-456-5678</p2>"
+      "<p3>Feel free to contact us anytime with questions or for more information about your safe!</p3>"
+      "</body>"
+      "</html>";
+
+      server.send(200, "text/html", response);
+  });
+
+  server.on("/sendemail", HTTP_GET, []() {
+    Serial.println("SendEmail endpoint triggered");
+ 
+    String email = server.arg(0);
+    server.send(200, "text/html", email);
+    
+      //Send the email
+    sendEmail(email);
+    /*
+    if (request->hasParam("email")) {
+      //Serial.println("Has email");
+      email = request->getParam("email")->value();
+      Serial.println(email);
+      //Send the email
+      sendEmail(email);
+    } else {
+      Serial.println("No email param found");
+      email = "FAILED";
+    }
+    */
+    
+  });
+  // Start the server
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  delay(2);
+}
+
+void sendEmail(String emailAddress) {
+
+  ESP_Mail_Session session;
+
+  session.server.host_name = SMTP_server ;
+
+  session.server.port = SMTP_Port;
+
+  session.login.email = sender_email;
+
+  session.login.password = sender_password;
+
+  session.login.user_domain = "";
+
+  /* Declare the message class */
+
+  SMTP_Message message;
+
+  message.sender.name = "ESP32";
+
+  message.sender.email = sender_email;
+
+  message.subject = "ESP32 Testing Email";
+
+  message.addRecipient(Recipient_name, emailAddress);
+
+  String textMsg = "hello!";
+
+  message.text.content = textMsg.c_str();
+
+  message.text.charSet = "us-ascii";
+
+  message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
+
+  if (!smtp.connect(&session))
+
+    return;
+
+  if (!MailClient.sendMail(&smtp, &message))
+
+    Serial.println("Error sending Email, " + smtp.errorReason());
+}
