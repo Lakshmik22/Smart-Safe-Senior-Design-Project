@@ -1,0 +1,96 @@
+#include <Arduino.h>
+
+// LED Pin Definitions
+#define PIN_RED    2
+#define PIN_GREEN  4
+#define PIN_BLUE   5
+
+//Motion Sensor Code
+const int trigPin1 = 5;
+const int trigPin2 = 12;
+const int echoPin1 = 13;
+const int echoPin2 = 34;
+
+// Buzzer Pin
+const int buzzerPin = 23;
+
+//define sound speed in cm/uS
+#define SOUND_SPEED 0.034
+#define CM_TO_INCH 0.393701
+
+long duration1, duration2;
+float distanceCm1, distanceCm2;
+float distanceInch1, distanceInch2;
+
+void setup() {
+  Serial.begin(115200); // Starts the serial communication
+  pinMode(trigPin1, OUTPUT); // Sets the trigPin as an Output
+  pinMode(trigPin2, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin1, INPUT); // Sets the echoPin as an Input
+  pinMode(echoPin2, INPUT); //Sets the echoPin as an Input
+
+  // Initialize Pins
+  pinMode(PIN_RED, OUTPUT);
+  pinMode(PIN_GREEN, OUTPUT);
+  pinMode(PIN_BLUE, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+}
+
+void loop() {
+  // Clears LEDpin
+  analogWrite(PIN_GREEN, 0);
+
+// Sensor 1
+digitalWrite(trigPin1, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin1, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin1, LOW);
+duration1 = pulseIn(echoPin1, HIGH);
+
+// Short delay before triggering Sensor 2
+delay(50);  // Increase delay for better separation
+
+// Sensor 2
+digitalWrite(trigPin2, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin2, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin2, LOW);
+duration2 = pulseIn(echoPin2, HIGH);
+  
+  // Calculate the distance
+  distanceCm1 = duration1 * 0.034 / 2;
+  distanceCm2 = duration2 * 0.034 / 2;
+  
+  // Convert to inches
+  distanceInch1 = distanceCm1 * CM_TO_INCH;
+  distanceInch2 = distanceCm2 * CM_TO_INCH;
+  
+  //delay(1000);
+
+  if(distanceInch1 <2){
+      Serial.print("\nMotion Detected");
+
+    analogWrite(PIN_GREEN, 250);
+    analogWrite(buzzerPin, 250);
+    delay(500);
+    analogWrite(PIN_GREEN, 0);
+    analogWrite(buzzerPin, 0);
+
+
+  }
+
+  if(distanceInch2 <3){
+      Serial.print("\nMotion Detected");
+
+    analogWrite(PIN_RED, 250);
+    analogWrite(buzzerPin, 250);
+    delay(500);
+    analogWrite(PIN_RED, 0);
+    analogWrite(buzzerPin, 0);
+
+
+  }
+
+}
