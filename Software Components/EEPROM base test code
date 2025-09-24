@@ -1,0 +1,33 @@
+#include "EEPROM.h"
+
+void setup() {
+  // put your setup code here, to run once:
+  //Check the EEPROM first byte for a value to see if an email address has already been saved
+  int addressLength = EEPROM.read(0);
+
+  if (addressLength == 0) {
+    String email = "rdear4@gmail.com";
+    int length = email.length(); //16
+
+    EEPROM.write(0, length);
+    
+    for (int i = 1; i < length+1; i++) {
+      EEPROM.write(i, email.substring(i, i+1));
+    }
+
+    EEPROM.commit();
+
+  } else {
+
+    for (int i = 0; i < addressLength; i++) {
+      Serial.print(byte(EEPROM.read(i+1)));
+    }
+  }
+  
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+}
