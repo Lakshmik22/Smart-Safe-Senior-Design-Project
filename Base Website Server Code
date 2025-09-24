@@ -1,0 +1,78 @@
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+
+const char* ssid = "everglades_Guest"; // Change as needed
+const char* password = "Dell2074"; // Change as needed
+
+AsyncWebServer server(80);
+
+void setup() {
+  Serial.begin(9600);
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Print the ESP32's IP address
+  Serial.print("ESP32 Web Server's IP address: ");
+  Serial.println(WiFi.localIP());
+
+  // Define a route to serve the HTML page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+    request->send(200, "text/html", 
+      "<!DOCTYPE html>"
+      "<html>"
+      "<head>"
+      "<title>Smart Safe</title>"
+      "<style>"
+      "h1 {text-align: center; margin-top: 30px;}"  
+      "h2 {position: absolute; top: 90px; right: 90px; font-size: 20px;}"
+
+      //Paragraphs
+      "p {position: relative; left: 40px; top: 40px; font-size: 18px; color: #333;}"
+      "p1 {position: absolute; top: 140px; right: 60px; font-size: 18px; color: #333;}"
+      "p2 {position: absolute; top: 170px; right: 60px; font-size: 18px; color: #333;}"
+      "p3 {position: absolute; top: 190px; right: 60px; font-size: 18px; color: #333;}"
+
+      "body {"
+            "background-color: lightblue;"
+        "}"
+
+      "input[type=email] {position: relative; left: 40px; top: 45px; padding: 10px; font-size: 16px; width: 250px;}"
+      "button {"
+      "position: relative; left: 50px; top: 50px; padding: 10px 20px;"
+      "font-size: 16px; border-radius: 5px; background-color: #007BFF; color: white;"
+      "border: none; cursor: pointer;"
+      "}"
+      "button:hover {background-color: #0056b3;}"
+      "</style>"
+      "</head>"
+      "<body>"
+      "<h1>Welcome to Smart Safe</h1>"
+      "<p>Please Enter Your Email Address:</p>"
+      "<input type='email' id='email' name='user_email' placeholder='Enter your email here'>"
+      "<button onclick='displayMessage()'>Submit</button>"
+      "<p id='SubmitMessage'></p>"
+      "<script>"
+      "function displayMessage() {"
+      "  document.getElementById('SubmitMessage').innerHTML = 'Thank you, please keep an eye on emails from our safe!';"
+      "}"
+      "</script>"
+
+      "<h2>Contact Us:</h2>"
+      "<p1>Email: SmartSafeSD1@gmail.com</p1>"
+      "<p2>Phone Number: 345-456-5678</p2>"
+      "<p3>Feel free to contact us anytime with questions or for more information about your safe!</p3>"
+      "</body>"
+      "</html>");
+  });
+
+  // Start the server
+  server.begin();
+}
+
+void loop() {}
